@@ -1,4 +1,21 @@
-# WSL for Embedded Development
+# WSL for Embedded Development <!-- omit in toc -->
+
+- [What is WSL?](#what-is-wsl)
+- [WSL Alternatives](#wsl-alternatives)
+  - [Why not Mac OS?](#why-not-mac-os)
+  - [Why not Docker?](#why-not-docker)
+- [WSL Benefits](#wsl-benefits)
+- [Getting Started with WSL](#getting-started-with-wsl)
+- [WSL Integrations](#wsl-integrations)
+  - [Cross-mounting of Filesystems](#cross-mounting-of-filesystems)
+  - [Mapping a Drive Letter](#mapping-a-drive-letter)
+  - [Network Adapter](#network-adapter)
+  - [Forwarding of Windows PATH Variable](#forwarding-of-windows-path-variable)
+  - [wsl.exe](#wslexe)
+  - [WSL USB GUI](#wsl-usb-gui)
+  - [VS Code](#vs-code)
+    - [Editing and Building](#editing-and-building)
+    - [Debugging and Flashing](#debugging-and-flashing)
 
 ## What is WSL?
 
@@ -10,18 +27,13 @@
 
 ### Why not Mac OS?
 
-> __TODO:__ Consolidate and shrink this section.
+Simply put, I'm a fan of Windows. There are a lot of UI decisions that just rub me the wrong way with Mac OS. I think there's some kind of cult dynamic going on here, because almost every ui/ux complaint I have about Mac OS I've heard voiced by coworkers. Nevertheless, it's Windows that's held up as the poster-child of bad design, usually accompanied by bad or misleading info. Go figure. If you like Apple it's no skin off my neck, just don't force it on me.
 
-Not too long ago, it used to be the case that if you were an embedded software developer you worked on Windows. In fact, you probably [didn't have a choice](https://interrupt.memfault.com/blog/the-best-and-worst-mcu-sdks#dont-choose-my-laptop-os-for-me). But, more and more, people are looking for a POSIX-compliant environment that can handle Bash scripting and CLI-based tooling. Apple has positioned themselves well to pick up this market share with their switch to the BSD-based [Darwin](https://en.wikipedia.org/wiki/Darwin_(operating_system).
+Even without WSL, cross-platform support for Windows is highly evolved. Path naming conventions, POSIX support, and use of the cmd.exe shell are not the big obstacles people make them out to be. Typically, there's either a lack of familiarity with the Windows platform, or there are issues with project setup that counteract any cross-platform support the project may have had.
 
-Mac OS may be POSIX-compliant, but Linux it is not and Apple has their own way of doing things. I've seen a number of ways that this creates issues for my coworkers. Following is a short list of the issues I've observed.
+All that being said, you can use WSL in your daily workflow with little to no friction. As far as POSIX-compatibility is concerned, I consider this better than Mac. There are differences with Mac OS that show themselves in projects. This can be due to using zsh instead of Bash, the differences between Apple versions of UNIX CLI utilities, differences between APFS and ext4 filesystems, issues with Apple Clang masquarading as gcc, or other nuances of being on a Mac.
 
-- The switch to M1 silicon was a major shake-up. It has taken a while for compilers and other tools to catch up. It has created issues with running x86-based Docker images locally (now they have to be multi-platform or rely on Rosetta). And some apps are simply lost in the annals of time (something that is a bigger deal for embedded development than it is for other software industries).
-- Apple clang masquerading as gcc. Not only does it define the `__GNUC__` intrinsic, it calls itself `gcc` on the command line. For the most part, this goes unnoticed, but you do have to watch out around compiler-detection conditional compilation flags and around subtle variations in command-line arguments. I've definitely seen this trip up some projects.
-- Apple switched the default shell to zsh starting with Catalina. This is because the license for bash changed to GPLv3. A lot of people like zsh, but I have seen it create some sharp edges. Bash and zsh are not the same thing and sometimes a shell script expects to be running in bash (and not the outdated 3.2 version of bash either).
-- Many command-line utilities are different on the Mac. Apple likes to make their own versions of everything with slighltly different command-line options. It's another sticking point for the cross-compatibility of shell scripts between Mac and Linux.
-- APFS has case-insensitive behavior. Unlike the ext4 filesystem, it cannot allow two files of the same name, differing only in case, to exist in the same directory. This creates problems in certain scenarios, particularly with Yocto.
-- Although the [Homebrew](https://brew.sh/) logo appears to depict beer, it is actually cider, as indicated by the Apple. Linux is free as in beer. Beer is better than cider. Therefore, Linux is better than Mac OS (and by extension, so is WSL).
+IMO, seeing something work correctly in WSL is a far better litmus test that something runs correctly in CI and in containers than seeing it work correctly on a Mac.
 
 ### Why not Docker?
 
@@ -33,7 +45,7 @@ Memfault has already [touched on this](https://interrupt.memfault.com/blog/conda
 
 The primary benefit is knowing that you're operating in a true Linux environment including a Linux kernel, an ext4 filesystem, and GNU-compliant Bash shell and command-line utilities. Considering that anything running in CI is likely to be a Linux-based Docker image, this is just a cleaner way to go. I have caught many issues where something worked fine on Mac but not on Linux due to a WSL-based workflow.
 
-The other benefit is how much faster builds run in WSL than in native Windows. I have experienced much faster build times in WSL as compared to Windows. For a typical bare-metal project with a CMake/Ninja based build, a pristine build may be under 10 seconds.
+The other benefit is faster build times. I have experienced much faster build times in WSL as compared to Windows. For a typical bare-metal project with a CMake/Ninja based build, a pristine build may be under 10 seconds.
 
 > __TODO:__ Add graph of example project with build-time results for different environments.
 
@@ -43,65 +55,100 @@ I won't cover getting started with WSL in this article, but Medium has a good ar
 
 ## WSL Integrations
 
-Let's move on to the main question: How to effectively and seamlessly integrate WSL into the development workflow. As I stated earlier, I'm not going to give a single prescription. I will simply list all the ways that WSL facilitates workflow integration.
+Let's move on to the main question: How to effectively and seamlessly integrate WSL into the development workflow. As I stated earlier, I'm not going to give a single prescription. I believe developers should have autonomy in creating their workflow. I will simply list all the ways that WSL facilitates workflow integration.
 
 ### Cross-mounting of Filesystems
 
-If you are wondering how to access files, the good news is that Microsoft has you covered in both directions.
+If you are wondering how to access files, the good news is that Windows has you covered in both directions.
 
-- All Windows letter drives are mounted in the `/mnt` directory of the WSL instance. This means that all files from your NTFS partitions are available within WSL.
-- All WSL instances are accessible in File Explorer as a network share beginning with `\\wsl.localhost`. Explorer navigating to a WSL filesystem easy with a top-level "Linux" category in the folders pane.
+- __Accessing Windows files from WSL__
+  - All Windows letter drives are mounted in the `/mnt` directory of the WSL instance.  
+    E.g. `C:\Users\username\Documents` becomes `/mnt/c/Users/username/Documents`
+- __Accessing WSL files from Windows__
+  - All WSL instances are accessible in File Explorer as a network share beginning with `\\wsl.localhost`.  
+    Additionnaly, File Explorer makes navigating to a WSL filesystem easy with a top-level "Linux" category in the folders pane.  
 
-![Linux-shares](images/Linux-shares.png)
+    ![Linux-shares](images/Linux-shares.png)
 
 ### Mapping a Drive Letter
 
-Being able to access files within the WSL instance through a network share is powerful, but it does have some limitations. Some apps will work well with that (e.g. Balena Etcher) and others will not. To get around this, it's necessary to map the WSL instance to a drive letter. Right click on the top-level folder (e.g. "Ubuntu-22.04") and select "Map network drive...". For the drive letter, I typically choose "Y:" or "Z:". Now you should have no problem opening IDEs, editors, etc. natively in Windows to the contents of a WSL instance. This also makes it easy to navigate to files in the WSL instance from a Windows-side command shell. This is a useful trick for running flash and debug scripts from Windows.
+Being able to access files within the WSL instance through a network share is powerful, but it does have some limitations. Some apps will work well with that (e.g. Balena Etcher) and others will not. To get around this, it's necessary to map the WSL instance to a drive letter. Right click on the top-level folder (e.g. "Ubuntu-22.04") and select "Map network drive...". For the drive letter, I typically choose "Y:" or "Z:". Now you should have no problem opening IDEs, editors, etc. natively in Windows to the contents of a WSL instance.
+
+Drive letter remapping also makes it easy to navigate to files in the WSL instance from a Windows-side command shell. This is a useful trick for running flash and debug scripts. The following example shows Windows Terminal split between two views, both are pointing at the same folder. The left side is in the Ubuntu Bash shell and is used to run the build natively in WSL. The right side is in Git Bash in Windows and has `cd`ed to the drive in WSL thanks to drive letter mapping. The right side is used to flash the device.
+
+![Split-terminal](images/Split-terminal.png)
+
+> _Note: This image does not show the full output of the right-hand side._
 
 ### Network Adapter
 
-Windows creates a Hyper-V Virtual Ethernet Adapter for WSL. Primarily this allows access to the Internet from WSL, but it also allows Windows-side and WSL-side applications to talk to each other via TCP/IP. This is similar to how containerized applications can communicate with the outside world via [exposed ports]9https://docs.docker.com/reference/cli/docker/container/run/#publish).
+Windows creates a Hyper-V Virtual Ethernet Adapter for WSL. Primarily this allows access to the Internet from WSL, but it also allows Windows-side and WSL-side applications to talk to each other via TCP/IP. This is similar to how containerized applications can communicate with the outside world via [exposed ports](https://docs.docker.com/reference/cli/docker/container/run/#publish).
 
-To take advantage of this, you will want to know the IP address assigned to the WSL adapter by Windows and you will want to know this inside the WSL instance. Add the following line to your `.bashrc` to assign this address to an environment variable.
+To take advantage of this, you will want to know the IP address assigned to the WSL adapter from within the WSL instance. Add the following line to your `.bashrc` to assign this address to an environment variable.
 
 ```bash
 export HOST_IP=`ip route|awk '/^default/{print $3}'`
 ```
 
+One use for this is to connect a WSL-side GDB client to a Windows side GDB server. More details on this below.
+
 ### Forwarding of Windows PATH Variable
 
-Type `echo $PATH` and you will see the contents of `echo %PATH%` as executed in `cmd.exe` following all the WSL-native paths. The only difference is that the paths are modified to work from WSL. (`C:\` changed to `/mnt/c/`, all `;` separators changed to `:` etc.). Type the name of any Windows executable visible in the Windows path and it will launch from the WSL Bash shell. For example, type `explorer.exe .` and a new instance of File Explorer will open showing the contents of the current WSL directory. The WSL Linux kernel automatically forwards any invocations of a `.exe` file to Windows.
+Type `echo $PATH` in your WSL Bash shell and you will see something interesting. After all of the paths native to the WSL instance (`/bin`, `/usr/local/bin`, etc.), you will see all of the paths from your Windows PATH variable. The only difference is that the paths are modified to work from WSL. (e.g. `C:\` is changed to `/mnt/c/`, all `;` separators changed to `:` etc.). The reason for this is that the WSL Linux kernel is designed to forward any invocation of a Windows-native application to the Windows host. This means any application accessible from the Windows command shell is also accessible from the WSL Bash shell.
 
-### WSL.exe
+Examples:
 
-The WSL.exe utility can be used for managing WSL instances, but it can also be used for invoking scripts within a WSL instance directly from Windows. This can be used to invoke a build script, or any other script, from an IDE residing natively in Windows.
+- Type `explorer.exe .` and a new instance of File Explorer will open showing the contents of the current WSL directory.
+- Type `code .` and a new instance of VS Code will appear and open the current folder as a remote connection.
 
-Example: Let's say I have my `stm-blinky` project cloned in WSL in a projects subdirectory of my user home directory. That project is managed using xPack and uses the `xpm run` command to invoke the build process. Invoking the build process from Windows would look as follows:
+### wsl.exe
 
-```cmd
-wsl.exe --cd /home/AFontaine79/Projects/stm-blinky xpm run build --config Debug
-```
+The wsl.exe utility is used for managing WSL instances, but it can also be used for invoking scripts within a WSL instance directly from Windows. This can be used to invoke a build script, or any other script, from an IDE residing natively in Windows. Just pass the Bash command line you want to run as an argument to `wsl.exe`. There are two options you may need before the Bash command.
 
-> __Note:__ This example assumes that Ubuntu-22.04 is my default WSL instance.
+- `-d` to select which distro (i.e. WSL instance) you wish to use. You only need this if the WSL instance you use for development is not already the default distro.
+- `--cd` to select the working directory inside the WSL instance .
+
+Here is an example using Eclipse to edit and build a project in WSL. Eclipse has access to the files thanks to drive letter mapping. The project is set up as a Makefile build and the build command is passed through `wsl.exe` to run it directly in Ubuntu Bash. The build shown in the CDT Build Console was started by clicking the hammer button.
+
+![Eclipse-build](images/Eclipse-build.png)
+
+> __Note:__ Setting up the debug configuration is easy here because the gdb server and client can both run natively from Windows and Eclipse has easy access to the ELF file.
+
+### WSL USB GUI
+
+One of the major questions people have about WSL is how to directly access their USB devices. Microsoft provides [instructions](https://learn.microsoft.com/en-us/windows/wsl/connect-usb) on how to map USB devices into a WSL instance using a tool called USB/IP. USB-over-IP is [already a supported feature](https://bresilla.com/post/hardware/raspberry/usbip/) in Linux distributions. With [usbipd-win](https://github.com/dorssel/usbipd-win), it takes advantage of the Hyper-V Virtual Ethernet Adapter to bridge devices into WSL. These show up as normal devices in `/dev`.
+
+Using the command-line tools to set up usbipd-win correctly isn't very user friendly. Fortunately there's a [GUI](https://github.com/featherbear/wsl-usb-gui) to make things easy. Just go through [this tutorial](https://blog.golioth.io/usb-support-in-wsl2-now-with-a-gui/) from Goloith and you'll be up and running in no time.
+
+Here is an example of what this looks like:
+
+| JLink probe forwarded to WSL           | Use of JLink Commander from WSL              |
+| -------------------------------------- | -------------------------------------------- |
+| ![WSL-USB-GUI](images/WSL-USB-GUI.png) | ![JLink-from-WSL](images/JLink-from-WSL.png) |
 
 ### VS Code
 
-VS Code makes integration with WSL easy thanks to vscode server. This is the same remote connection technology used for connecting to dev containers or cloud-based dev environments. Simply navigate to the base directory of the repo you want to develop on and type `code .`. VS Code will open automatically open in Windows and establish the remote connection to your WSL instance. The terminal and all the files will operate natively in the WSL instance.
+#### Editing and Building
 
-#### Debugging with VS Code
+As noted previously, VS Code will automatically establish a remote connection for any folder opened from a WSL instance. The remote connection icon in the lower left corner will denote the distro you are connected to.
 
-Any tasks or launch configurations will operate in the WSL instance and therefore not see your debug hardware. My primary recommendation is to use WSL USB GUI, discussed below, to map your JLink or similar hardware into WSL and work from there. However, it is possible to launch the JLink GDB Server on the Windows side and have the `gdb` client in WSL connect to it.
+![VSCode-remote-connect](images/VSCode-remote-connect.png)
 
+Since VS Code is remote connected, the terminal it opens will be your WSL Bash shell and any commands run will occur natively inside the WSL instance. This is incredibly convenient as it negates the need pass any build commands through `wsl.exe`.
 
+#### Debugging and Flashing
 
-## Deleted content
+The easiest way to perform flash and debug operations is to have your debug tools installed directly into WSL and to map the corresponding USB devices into WSL using WSL USB GUI. However, you do not have to do things this way.
 
-### Why I Stuck with Windows
+As noted above, it is possible to run the GDB server natively from Windows and bridge to it from the GDB client running in WSL. For this to work automatically as a VS Code launch configuration, several things have to be set up properly.
 
-Simply put, I'm a Windows user plain and simple. When it comes to UI, I like the way Microsoft does things better than Apple. And UI philosophy has a huge impact on developer workflow. I used a MacBook throughout the 2010s in my personal life and I'm just not going back.
+- `JLinkGDBServerCL.exe` needs to be in the path visible to WSL.
+- The `HOST_IP` env var needs to be in your `.bashrc` as decribed above.
+- The `Cortex Debug` launch configuration needs the server type set to `external`.
+- The launch configuration should have invoke a pre-launch task, defined in `tasks.json`, to invoke `JLinkGDBServerCL.exe`.
+- `JLinkGDBServerCL.exe` needs to be supplied with the `-nolocalhostonly` option so that it can be accessed from WSL's virtual Ethernet adapter.
+- The gdb client needs the `target remote` as one of its startup commands with the correct IP address (`$HOST_IP`) and port (usually `2331`) to connect to the GDB server.
 
-I have stuck with Windows in my professional life despite the ongoing shift to POSIX-compliant systems, Bash scripting, and the increasing reliance on Unix-style command line tools. I understand how awkward and backwards Windows looks against this backdrop. Part of me thought that the day would come that I would have to give up on Windows, but somehow it never has.
+More details and discussion on setting this up can be found here [here](https://github.com/Marus/cortex-debug/issues/467). Note that I and many others have experienced problems with this bridging setup. You may find that the GDB client randomly disconnects from the server or that you're not able to step very far in the code base before the debug setup becomes unstable.
 
-To be honest, the cross-platform support out there is really good. Git Bash gives an easy deafult Bash shell for Windows. Apps like PowerToys and Terminal give a really good experience. And overall, for one that knows how to use this platform, the problems are negligable to non-existent.
-
-Most of the problems I see other developers having with Windows come down to one of two things. One, they are just not familiar with the platform. Or two, there is some issue with the project setup. Perhaps it's not set up properly for cross-platform development. Or perhaps it's not following best practices and just happens to work on a Mac. Number two should be a concern for any project, especially considering that CI jobs run in a Linux environment.
+> _I strongly recommend WSL USB GUI over attempts to run the GDB server natively in Windows._
