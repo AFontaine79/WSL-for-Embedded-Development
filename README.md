@@ -27,9 +27,7 @@
 
 ### Why not Mac OS?
 
-Simply put, I'm a fan of Windows. There are a lot of UI decisions that just rub me the wrong way with Mac OS. I think there's some kind of cult dynamic going on here, because almost every ui/ux complaint I have about Mac OS I've heard voiced by coworkers. Nevertheless, it's Windows that's held up as the poster-child of bad design, usually accompanied by bad or misleading info. Go figure. If you like Apple it's no skin off my neck, just don't force it on me.
-
-Even without WSL, cross-platform support for Windows is highly evolved. Path naming conventions, POSIX support, and use of the cmd.exe shell are not the big obstacles people make them out to be. Typically, there's either a lack of familiarity with the Windows platform, or there are issues with project setup that counteract any cross-platform support the project may have had.
+Simply put, I'm a fan of Windows. There are a lot of UI decisions that just rub me the wrong way with Mac OS. Even without WSL, cross-platform support for Windows is highly evolved. Path naming conventions, POSIX support, and use of the cmd.exe shell are not the big obstacles people make them out to be. Typically, there's either a lack of familiarity with the Windows platform, or there are issues with project setup that counteract any cross-platform support the project may have had.
 
 All that being said, you can use WSL in your daily workflow with little to no friction. As far as POSIX-compatibility is concerned, I consider this better than Mac. There are differences with Mac OS that show themselves in projects. This can be due to using zsh instead of Bash, the differences between Apple versions of UNIX CLI utilities, differences between APFS and ext4 filesystems, issues with Apple Clang masquarading as gcc, or other nuances of being on a Mac.
 
