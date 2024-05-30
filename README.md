@@ -132,7 +132,7 @@ As noted previously, VS Code will automatically establish a remote connection fo
 
 ![VSCode-remote-connect](images/VSCode-remote-connect.png)
 
-Since VS Code is remote connected, the terminal it opens will be your WSL Bash shell and any commands run will occur natively inside the WSL instance. This is incredibly convenient as it negates the need pass any build commands through `wsl.exe`.
+Since VS Code is remote connected, the terminal it opens will be your WSL Bash shell and any commands run will occur natively inside the WSL instance. This is incredibly convenient as it negates the need to pass any build commands through `wsl.exe`.
 
 #### Debugging and Flashing
 
