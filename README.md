@@ -16,6 +16,7 @@
   - [VS Code](#vs-code)
     - [Editing and Building](#editing-and-building)
     - [Debugging and Flashing](#debugging-and-flashing)
+- [Q and A](#q-and-a)
 
 ## What is WSL?
 
@@ -150,3 +151,26 @@ As noted above, it is possible to run the GDB server natively from Windows and b
 More details and discussion on setting this up can be found here [here](https://github.com/Marus/cortex-debug/issues/467). Note that I and many others have experienced problems with this bridging setup. You may find that the GDB client randomly disconnects from the server or that you're not able to step very far in the code base before the debug setup becomes unstable.
 
 > _I strongly recommend WSL USB GUI over attempts to run the GDB server natively in Windows._
+
+## Q and A
+
+__Can you mix Linux and Windows commands from the WSL terminal (e.g. `dir.exe | grep -i build`)?__
+
+You can do this but it doesn't work like you expect. `dir.exe` doesn't output properly to be handled by the pipe.
+
+```bash
+aaronf@DESKTOP-2HU5QJM:~/Projects/stm-blinky$ dir.exe | grep -i build
+Drivers         Makefile   build  node_modules       xpacks
+aaronf@DESKTOP-2HU5QJM:~/Projects/stm-blinky$ ls | grep -i build
+build
+aaronf@DESKTOP-2HU5QJM:~/Projects/stm-blinky$ dir.exe -l | grep -i build
+drwxr-xr-x 3 AFont 197609      0 Apr 21 11:32 build
+aaronf@DESKTOP-2HU5QJM:~/Projects/stm-blinky$ ls -l | grep -i build
+drwxr-xr-x 3 aaronf aaronf   4096 Apr 21 11:32 build
+```
+
+__You're using VS Code in Windows. Did you launch VS Code from WSL to get the remote connection?__
+
+Clarification: VS Code is running in Windows but the VS Code Server is running in WSL. All remote connections use the [VS Code Server architecture](https://code.visualstudio.com/docs/remote/vscode-server#_architecture).
+
+VS Code is launched by typing `code .` in the WSL terminal at the directory you want to open. VS Code will open the GUI in Windows and remote connect automatically to the WSL instance.
